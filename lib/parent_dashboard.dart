@@ -173,7 +173,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.1),
+                color: Colors.white.withValues(alpha: 0.1),
               ),
             ),
           ),
@@ -185,7 +185,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
               height: 400,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.1),
+                color: Colors.white.withValues(alpha: 0.1),
               ),
             ),
           ),
@@ -204,7 +204,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 10,
               offset: const Offset(0, -2),
             ),
@@ -262,7 +262,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF2196F3).withOpacity(0.3),
+                  color: const Color(0xFF2196F3).withValues(alpha: 0.3),
                   blurRadius: 15,
                   offset: const Offset(0, 5),
                 ),
@@ -281,7 +281,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
                           Text(
                             'Welcome back,',
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.9),
+                              color: Colors.white.withValues(alpha: 0.9),
                               fontSize: 14,
                             ),
                           ),
@@ -300,7 +300,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
@@ -411,10 +411,10 @@ class _ParentDashboardState extends State<ParentDashboard> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
+        color: Colors.white.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Colors.white.withOpacity(0.3),
+          color: Colors.white.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -423,7 +423,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, color: Colors.white, size: 24),
@@ -444,7 +444,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
                 Text(
                   label,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                     fontSize: 12,
                   ),
                 ),
@@ -481,8 +481,8 @@ class _ParentDashboardState extends State<ParentDashboard> {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          const Color(0xFF2196F3).withOpacity(0.2),
-                          const Color(0xFF1976D2).withOpacity(0.1),
+                          const Color(0xFF2196F3).withValues(alpha: 0.2),
+                          const Color(0xFF1976D2).withValues(alpha: 0.1),
                         ],
                       ),
                       shape: BoxShape.circle,
@@ -519,7 +519,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFF9800).withOpacity(0.15),
+                              color: const Color(0xFFFF9800).withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Row(
@@ -558,8 +558,8 @@ class _ParentDashboardState extends State<ParentDashboard> {
                       boxShadow: [
                         BoxShadow(
                           color: isUpToDate
-                              ? const Color(0xFF4CAF50).withOpacity(0.3)
-                              : const Color(0xFFF44336).withOpacity(0.3),
+                              ? const Color(0xFF4CAF50).withValues(alpha: 0.3)
+                              : const Color(0xFFF44336).withValues(alpha: 0.3),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -584,13 +584,13 @@ class _ParentDashboardState extends State<ParentDashboard> {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        const Color(0xFFFF9800).withOpacity(0.1),
-                        const Color(0xFFFF9800).withOpacity(0.05),
+                        const Color(0xFFFF9800).withValues(alpha: 0.1),
+                        const Color(0xFFFF9800).withValues(alpha: 0.05),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: const Color(0xFFFF9800).withOpacity(0.2),
+                      color: const Color(0xFFFF9800).withValues(alpha: 0.2),
                     ),
                   ),
                   child: Column(
@@ -601,7 +601,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
                           Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFF9800).withOpacity(0.2),
+                              color: const Color(0xFFFF9800).withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Icon(
@@ -671,13 +671,13 @@ class _ParentDashboardState extends State<ParentDashboard> {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      const Color(0xFF2196F3).withOpacity(0.1),
-                      const Color(0xFF2196F3).withOpacity(0.05),
+                      const Color(0xFF2196F3).withValues(alpha: 0.1),
+                      const Color(0xFF2196F3).withValues(alpha: 0.05),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: const Color(0xFF2196F3).withOpacity(0.2),
+                    color: const Color(0xFF2196F3).withValues(alpha: 0.2),
                   ),
                 ),
                 child: Row(
@@ -685,7 +685,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF2196F3).withOpacity(0.2),
+                        color: const Color(0xFF2196F3).withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(
@@ -732,7 +732,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF2196F3).withOpacity(0.15),
+                            color: const Color(0xFF2196F3).withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(

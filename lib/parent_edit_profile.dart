@@ -39,7 +39,6 @@ class _ParentEditProfilePageState extends State<ParentEditProfilePage> {
       fullName: _nameController.text.trim(),
       email: _emailController.text.trim(),
       phone: _phoneController.text.trim(),
-      password: currentUser!.password,
       userType: currentUser!.userType,
     );
 
@@ -61,7 +60,9 @@ class _ParentEditProfilePageState extends State<ParentEditProfilePage> {
             children: [
               CircleAvatar(
                 radius: 50,
-                backgroundColor: Theme.of(context).primaryColor.withOpacity(0.2),
+                backgroundColor: Theme.of(
+                  context,
+                ).primaryColor.withValues(alpha: 0.2),
                 child: Text(
                   _nameController.text.isNotEmpty
                       ? _nameController.text[0].toUpperCase()
@@ -95,10 +96,9 @@ class _ParentEditProfilePageState extends State<ParentEditProfilePage> {
                   border: OutlineInputBorder(),
                 ),
                 keyboardType: TextInputType.emailAddress,
-                validator: (value) =>
-                    value == null || !value.contains('@')
-                        ? 'Enter a valid email'
-                        : null,
+                validator: (value) => value == null || !value.contains('@')
+                    ? 'Enter a valid email'
+                    : null,
               ),
               const SizedBox(height: 16),
 
@@ -136,3 +136,4 @@ class _ParentEditProfilePageState extends State<ParentEditProfilePage> {
     );
   }
 }
+

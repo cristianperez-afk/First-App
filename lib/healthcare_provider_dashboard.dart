@@ -93,7 +93,7 @@ class _HealthcareProviderDashboardState extends State<HealthcareProviderDashboar
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.1),
+                color: Colors.white.withValues(alpha: 0.1),
               ),
             ),
           ),
@@ -105,7 +105,7 @@ class _HealthcareProviderDashboardState extends State<HealthcareProviderDashboar
               height: 400,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.1),
+                color: Colors.white.withValues(alpha: 0.1),
               ),
             ),
           ),
@@ -126,7 +126,7 @@ class _HealthcareProviderDashboardState extends State<HealthcareProviderDashboar
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 10,
               offset: const Offset(0, -2),
             ),
@@ -207,7 +207,7 @@ class _HealthcareProviderDashboardState extends State<HealthcareProviderDashboar
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF2196F3).withOpacity(0.3),
+                  color: const Color(0xFF2196F3).withValues(alpha: 0.3),
                   blurRadius: 15,
                   offset: const Offset(0, 5),
                 ),
@@ -226,7 +226,7 @@ class _HealthcareProviderDashboardState extends State<HealthcareProviderDashboar
                           Text(
                             'Welcome back,',
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.9),
+                              color: Colors.white.withValues(alpha: 0.9),
                               fontSize: 14,
                             ),
                           ),
@@ -245,7 +245,7 @@ class _HealthcareProviderDashboardState extends State<HealthcareProviderDashboar
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
@@ -418,10 +418,10 @@ class _HealthcareProviderDashboardState extends State<HealthcareProviderDashboar
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
+        color: Colors.white.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Colors.white.withOpacity(0.3),
+          color: Colors.white.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -430,7 +430,7 @@ class _HealthcareProviderDashboardState extends State<HealthcareProviderDashboar
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, color: Colors.white, size: 24),
@@ -451,7 +451,7 @@ class _HealthcareProviderDashboardState extends State<HealthcareProviderDashboar
                 Text(
                   label,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                     fontSize: 12,
                   ),
                 ),
@@ -466,7 +466,7 @@ class _HealthcareProviderDashboardState extends State<HealthcareProviderDashboar
   Widget _buildActionCard(String label, IconData icon, Color color) {
     return Card(
       elevation: 3,
-      shadowColor: color.withOpacity(0.3),
+      shadowColor: color.withValues(alpha: 0.3),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: () {
@@ -510,7 +510,7 @@ class _HealthcareProviderDashboardState extends State<HealthcareProviderDashboar
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.15),
+                  color: color.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(icon, color: color, size: 28),
@@ -556,8 +556,8 @@ class _HealthcareProviderDashboardState extends State<HealthcareProviderDashboar
                 boxShadow: [
                   BoxShadow(
                     color: isCompleted
-                        ? const Color(0xFF4CAF50).withOpacity(0.3)
-                        : const Color(0xFF2196F3).withOpacity(0.3),
+                        ? const Color(0xFF4CAF50).withValues(alpha: 0.3)
+                        : const Color(0xFF2196F3).withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -623,7 +623,7 @@ class _HealthcareProviderDashboardState extends State<HealthcareProviderDashboar
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF2196F3).withOpacity(0.1),
+                    color: const Color(0xFF2196F3).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -640,8 +640,8 @@ class _HealthcareProviderDashboardState extends State<HealthcareProviderDashboar
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     color: isCompleted
-                        ? const Color(0xFF4CAF50).withOpacity(0.15)
-                        : const Color(0xFFFF9800).withOpacity(0.15),
+                        ? const Color(0xFF4CAF50).withValues(alpha: 0.15)
+                        : const Color(0xFFFF9800).withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(

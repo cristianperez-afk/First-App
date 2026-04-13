@@ -125,20 +125,29 @@ class _AddPatientPageState extends State<AddPatientPage> {
   }
 
   /// GENERATE QR IMAGE FILE
+  RenderRepaintBoundary? _getQrBoundary() {
+    final qrContext = _qrKey.currentContext;
+    if (qrContext == null) {
+      debugPrint('QR key context is null');
+      return null;
+    }
+
+    final boundary = qrContext.findRenderObject() as RenderRepaintBoundary?;
+    if (boundary == null) {
+      debugPrint('Render boundary is null');
+      return null;
+    }
+
+    return boundary;
+  }
+
   Future<File?> _generateQrImageFile() async {
     try {
       // Wait a bit for the dialog to render
       await Future.delayed(const Duration(milliseconds: 500));
 
-      final context = _qrKey.currentContext;
-      if (context == null) {
-        debugPrint('QR key context is null');
-        return null;
-      }
-
-      final boundary = context.findRenderObject() as RenderRepaintBoundary?;
+      final boundary = _getQrBoundary();
       if (boundary == null) {
-        debugPrint('Render boundary is null');
         return null;
       }
 
@@ -181,18 +190,14 @@ class _AddPatientPageState extends State<AddPatientPage> {
 
   /// SAVE QR TO FILE AND SHARE
   Future<void> _saveQRCode() async {
+    final messenger = ScaffoldMessenger.of(context);
     try {
       setState(() => _isSaving = true);
 
       // Wait for the QR code to render
       await Future.delayed(const Duration(milliseconds: 500));
 
-      final context = _qrKey.currentContext;
-      if (context == null) {
-        throw Exception('QR code context not found');
-      }
-
-      final boundary = context.findRenderObject() as RenderRepaintBoundary?;
+      final boundary = _getQrBoundary();
       if (boundary == null) {
         throw Exception('QR code boundary not found');
       }
@@ -213,7 +218,7 @@ class _AddPatientPageState extends State<AddPatientPage> {
       await Share.shareXFiles([XFile(filePath)], text: 'Patient QR Code');
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           const SnackBar(
             content: Text('QR Code saved and ready to share!'),
             backgroundColor: Colors.green,
@@ -223,7 +228,7 @@ class _AddPatientPageState extends State<AddPatientPage> {
     } catch (e) {
       debugPrint('Save QR error: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           SnackBar(
             content: Text('Error saving QR code: ${e.toString()}'),
             backgroundColor: Colors.red,
@@ -237,9 +242,10 @@ class _AddPatientPageState extends State<AddPatientPage> {
 
   /// SHARE VIA EMAIL
   Future<void> _sendViaEmail(Map<String, dynamic> patientData) async {
+    final messenger = ScaffoldMessenger.of(context);
     // Show loading indicator
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         const SnackBar(
           content: Text('Generating QR code...'),
           duration: Duration(seconds: 1),
@@ -287,7 +293,7 @@ Vaccination Clinic
       );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           SnackBar(
             content: Text('Error sharing via email: $e'),
             backgroundColor: Colors.red,
@@ -299,6 +305,7 @@ Vaccination Clinic
 
   /// SHARE VIA SMS
   Future<void> _sendViaSMS(Map<String, dynamic> patientData) async {
+    final messenger = ScaffoldMessenger.of(context);
     final message = '''
 Patient ID: ${patientData['id']}
 Child: ${patientData['childName']}
@@ -311,7 +318,7 @@ Scan QR code for quick check-in.
       await Share.share(message);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           SnackBar(
             content: Text('Error sharing via SMS: $e'),
             backgroundColor: Colors.red,
@@ -489,7 +496,7 @@ Scan QR code for quick check-in.
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  value: _selectedGender,
+                  initialValue: _selectedGender,
                   decoration: const InputDecoration(labelText: 'Gender', prefixIcon: Icon(Icons.person_outline), border: OutlineInputBorder()),
                   items: _genderOptions.map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
                   onChanged: (v) => setState(() => _selectedGender = v!),

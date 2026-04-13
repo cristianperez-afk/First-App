@@ -21,12 +21,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
   @override
   void initState() {
     super.initState();
-    _nameController =
-        TextEditingController(text: currentUser?.fullName ?? '');
-    _emailController =
-        TextEditingController(text: currentUser?.email ?? '');
-    _phoneController =
-        TextEditingController(text: currentUser?.phone ?? '');
+    _nameController = TextEditingController(text: currentUser?.fullName ?? '');
+    _emailController = TextEditingController(text: currentUser?.email ?? '');
+    _phoneController = TextEditingController(text: currentUser?.phone ?? '');
   }
 
   @override
@@ -48,7 +45,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
         fullName: _nameController.text.trim(),
         email: _emailController.text.trim().toLowerCase(),
         phone: _phoneController.text.trim(),
-        password: currentUser!.password, // keep old password
         userType: currentUser!.userType, // keep role
       );
 
@@ -92,9 +88,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Edit Profile'),
-      ),
+      appBar: AppBar(title: const Text('Edit Profile')),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -104,8 +98,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
               children: [
                 CircleAvatar(
                   radius: 50,
-                  backgroundColor:
-                      Theme.of(context).primaryColor.withOpacity(0.3),
+                  backgroundColor: Theme.of(
+                    context,
+                  ).primaryColor.withValues(alpha: 0.3),
                   child: Text(
                     _nameController.text.isNotEmpty
                         ? _nameController.text[0].toUpperCase()
@@ -168,3 +163,4 @@ class _EditProfilePageState extends State<EditProfilePage> {
     );
   }
 }
+

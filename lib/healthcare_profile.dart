@@ -46,13 +46,14 @@ class _ProfileTabState extends State<ProfileTab> {
   }
 
   Future<void> _pickAndUploadImage() async {
+    final messenger = ScaffoldMessenger.of(context);
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
     if (pickedFile != null && currentUser != null) {
       try {
         // Show loading indicator
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           const SnackBar(content: Text('Uploading image...')),
         );
 
@@ -86,17 +87,17 @@ class _ProfileTabState extends State<ProfileTab> {
           _profilePictureUrl = downloadUrl;
         });
 
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           const SnackBar(content: Text('Profile picture updated successfully!')),
         );
       } catch (e) {
-        print('Upload error: $e'); // For debugging
-        ScaffoldMessenger.of(context).showSnackBar(
+        debugPrint('Upload error: $e'); // For debugging
+        messenger.showSnackBar(
           SnackBar(content: Text('Error uploading image: ${e.toString()}')),
         );
       }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         const SnackBar(content: Text('Please select an image and ensure you are logged in')),
       );
     }
@@ -131,10 +132,12 @@ class _ProfileTabState extends State<ProfileTab> {
                           backgroundImage: _profilePictureUrl != null
                               ? NetworkImage(_profilePictureUrl!)
                               : null,
-                          backgroundColor: Theme.of(context).primaryColor.withOpacity(0.3),
+                          backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.3),
                           child: _profilePictureUrl == null
                               ? Text(
-                                  currentUser?.fullName[0].toUpperCase() ?? 'U',
+                                  currentUser?.fullName.trim().isNotEmpty == true
+                                      ? currentUser!.fullName.trim()[0].toUpperCase()
+                                      : 'U',
                                   style: const TextStyle(
                                     fontSize: 48,
                                     fontWeight: FontWeight.bold,
@@ -190,7 +193,7 @@ class _ProfileTabState extends State<ProfileTab> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Text(
@@ -248,6 +251,7 @@ class _ProfileTabState extends State<ProfileTab> {
   title: 'Change Password',
   subtitle: 'Update your password',
   onTap: () async {
+    final messenger = ScaffoldMessenger.of(context);
     final changed = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -256,7 +260,7 @@ class _ProfileTabState extends State<ProfileTab> {
     );
 
     if (changed == true && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         const SnackBar(content: Text('Password updated')),
       );
     }
@@ -386,7 +390,7 @@ class _ProfileTabState extends State<ProfileTab> {
         leading: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: Theme.of(context).primaryColor.withOpacity(0.1),
+            color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(

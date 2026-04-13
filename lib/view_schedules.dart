@@ -20,7 +20,12 @@ class _ViewSchedulesPageState extends State<ViewSchedulesPage> {
   }
 
   Future<void> _loadSchedules() async {
-    if (currentUser == null) return;
+    if (currentUser == null) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+      return;
+    }
 
     try {
       final querySnapshot = await FirebaseFirestore.instance
@@ -68,8 +73,8 @@ class _ViewSchedulesPageState extends State<ViewSchedulesPage> {
         _isLoading = false;
       });
     } catch (e) {
-      setState(() => _isLoading = false);
       if (mounted) {
+        setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading schedules: $e')),
         );
@@ -123,7 +128,7 @@ class _ViewSchedulesPageState extends State<ViewSchedulesPage> {
                             Row(
                               children: [
                                 CircleAvatar(
-                                  backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                                  backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                                   child: Text(
                                     schedule['childName'][0].toUpperCase(),
                                     style: TextStyle(

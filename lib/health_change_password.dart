@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:vaccine_care/main.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ChangePasswordPage extends StatefulWidget {
   const ChangePasswordPage({super.key});
@@ -34,39 +34,28 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
 
     setState(() => _saving = true);
 
-    try {
-      // Verify current password
-      if (_currentPasswordController.text != currentUser!.password) {
-        setState(() => _saving = false);
+    final authUser = FirebaseAuth.instance.currentUser;
+    if (authUser == null || currentUser == null) {
+      setState(() => _saving = false);
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Current password is incorrect'),
+            content: Text('Session expired. Please sign in again'),
             backgroundColor: Colors.red,
           ),
         );
-        return;
       }
+      return;
+    }
 
-      // Create updated user with new password
-      final updatedUser = RegisteredUser(
-        fullName: currentUser!.fullName,
-        email: currentUser!.email,
-        phone: currentUser!.phone,
-        password: _newPasswordController.text,
-        userType: currentUser!.userType,
+    try {
+      final credential = EmailAuthProvider.credential(
+        email: authUser.email ?? currentUser!.email,
+        password: _currentPasswordController.text.trim(),
       );
 
-      // Update password in Firestore
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(updatedUser.email)
-          .update({
-            'password': updatedUser.password,
-            'updatedAt': FieldValue.serverTimestamp(),
-          });
-
-      // Update current user session
-      currentUser = updatedUser;
+      await authUser.reauthenticateWithCredential(credential);
+      await authUser.updatePassword(_newPasswordController.text.trim());
 
       setState(() => _saving = false);
 
@@ -78,6 +67,17 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
           ),
         );
         Navigator.pop(context, true);
+      }
+    } on FirebaseAuthException catch (e) {
+      setState(() => _saving = false);
+      if (mounted) {
+        final message =
+            e.code == 'wrong-password' || e.code == 'invalid-credential'
+            ? 'Current password is incorrect'
+            : (e.message ?? 'Unable to update password');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message), backgroundColor: Colors.red),
+        );
       }
     } catch (e) {
       setState(() => _saving = false);
@@ -95,9 +95,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Change Password'),
-      ),
+      appBar: AppBar(title: const Text('Change Password')),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -105,11 +103,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
             key: _formKey,
             child: Column(
               children: [
-                const Icon(
-                  Icons.lock,
-                  size: 64,
-                  color: Colors.blue,
-                ),
+                const Icon(Icons.lock, size: 64, color: Colors.blue),
                 const SizedBox(height: 24),
 
                 // Current Password
@@ -143,9 +137,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                     prefixIcon: const Icon(Icons.lock),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscureNew
-                            ? Icons.visibility
-                            : Icons.visibility_off,
+                        _obscureNew ? Icons.visibility : Icons.visibility_off,
                       ),
                       onPressed: () =>
                           setState(() => _obscureNew = !_obscureNew),

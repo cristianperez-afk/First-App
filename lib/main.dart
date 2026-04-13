@@ -4,6 +4,7 @@ import 'parent_dashboard.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'notification_service.dart';
 
 class Patient {
@@ -33,14 +34,12 @@ class RegisteredUser {
   String fullName;
   String email;
   String phone;
-  String password;
   String userType;
 
   RegisteredUser({
     required this.fullName,
     required this.email,
     required this.phone,
-    required this.password,
     required this.userType,
   });
 
@@ -49,7 +48,6 @@ class RegisteredUser {
       'fullName': fullName,
       'email': email,
       'phone': phone,
-      'password': password,
       'userType': userType,
       'createdAt': FieldValue.serverTimestamp(),
     };
@@ -61,7 +59,6 @@ class RegisteredUser {
       fullName: data['fullName'] ?? '',
       email: data['email'] ?? '',
       phone: data['phone'] ?? '',
-      password: data['password'] ?? '',
       userType: data['userType'] ?? '',
     );
   }
@@ -72,9 +69,7 @@ List<Map<String, dynamic>> globalPatients = [];
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await NotificationService.initialize();
   runApp(const MyApp());
 }
@@ -93,7 +88,10 @@ class MyApp extends StatelessWidget {
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 16,
+          ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(color: Colors.grey[300]!),
@@ -150,11 +148,7 @@ class AnimatedBackground extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [
-                Color(0xFFE3F2FD),
-                Color(0xFFBBDEFB),
-                Color(0xFF90CAF9),
-              ],
+              colors: [Color(0xFFE3F2FD), Color(0xFFBBDEFB), Color(0xFF90CAF9)],
             ),
           ),
         ),
@@ -166,7 +160,7 @@ class AnimatedBackground extends StatelessWidget {
             height: 300,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white.withOpacity(0.1),
+              color: Colors.white.withValues(alpha: 0.1),
             ),
           ),
         ),
@@ -178,7 +172,7 @@ class AnimatedBackground extends StatelessWidget {
             height: 400,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white.withOpacity(0.1),
+              color: Colors.white.withValues(alpha: 0.1),
             ),
           ),
         ),
@@ -192,20 +186,20 @@ class EmailValidator {
     if (value == null || value.trim().isEmpty) {
       return 'Please enter your Gmail address';
     }
-    
+
     final emailRegex = RegExp(
       r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
     );
     if (!emailRegex.hasMatch(value.trim())) {
       return 'Please enter a valid email format';
     }
-    
+
     final lowerEmail = value.trim().toLowerCase();
-    if (!lowerEmail.endsWith('@gmail.com') && 
+    if (!lowerEmail.endsWith('@gmail.com') &&
         !lowerEmail.endsWith('@googlemail.com')) {
       return 'Please use a Gmail address (@gmail.com)';
     }
-    
+
     return null;
   }
 }
@@ -220,7 +214,8 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMixin {
+class _LoginPageState extends State<LoginPage>
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -239,16 +234,19 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     );
-    
+
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
     );
-    
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic));
-    
+
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: Curves.easeOutCubic,
+          ),
+        );
+
     _animationController.forward();
   }
 
@@ -266,12 +264,26 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     setState(() => _loading = true);
 
     try {
+      final email = _emailController.text.trim().toLowerCase();
+      debugPrint('Login attempt started for $email as $_userType');
+
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: _passwordController.text,
+      );
+
+      debugPrint('Firebase Auth sign-in succeeded for $email');
+
       final userDoc = await FirebaseFirestore.instance
           .collection('users')
-          .doc(_emailController.text.trim().toLowerCase())
+          .doc(email)
           .get();
 
+      debugPrint('Firestore user profile lookup for $email exists=${userDoc.exists}');
+
       if (!userDoc.exists) {
+        debugPrint('Login failed: Firestore profile not found for $email');
+        await FirebaseAuth.instance.signOut();
         setState(() => _loading = false);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -280,12 +292,14 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                 children: [
                   Icon(Icons.error_outline, color: Colors.white),
                   SizedBox(width: 12),
-                  Expanded(child: Text("Invalid email or password")),
+                  Expanded(child: Text("Account profile not found")),
                 ],
               ),
               backgroundColor: Colors.red[400],
               behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
               margin: const EdgeInsets.all(16),
             ),
           );
@@ -295,7 +309,11 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
 
       final user = RegisteredUser.fromFirestore(userDoc);
 
-      if (user.password != _passwordController.text || user.userType != _userType) {
+      if (user.userType != _userType) {
+        debugPrint(
+          'Login failed: account type mismatch for $email. Expected $_userType, found ${user.userType}',
+        );
+        await FirebaseAuth.instance.signOut();
         setState(() => _loading = false);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -304,12 +322,16 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                 children: [
                   Icon(Icons.error_outline, color: Colors.white),
                   SizedBox(width: 12),
-                  Expanded(child: Text("Invalid email or password")),
+                  Expanded(
+                    child: Text("Please sign in with the correct account type"),
+                  ),
                 ],
               ),
               backgroundColor: Colors.red[400],
               behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
               margin: const EdgeInsets.all(16),
             ),
           );
@@ -318,22 +340,65 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       }
 
       currentUser = user;
+      debugPrint('Login success for $email with userType=${user.userType}');
       setState(() => _loading = false);
 
       if (mounted) {
         Navigator.pushReplacement(
           context,
           PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => _userType == "parent"
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                _userType == "parent"
                 ? const ParentDashboard()
                 : const HealthcareProviderDashboard(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              return FadeTransition(opacity: animation, child: child);
-            },
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+          ),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      debugPrint('FirebaseAuthException on login for ${_emailController.text.trim().toLowerCase()}: ${e.code} - ${e.message}');
+      setState(() => _loading = false);
+      if (mounted) {
+        String message;
+        switch (e.code) {
+          case 'user-not-found':
+          case 'wrong-password':
+          case 'invalid-credential':
+            message = 'Invalid email or password';
+            break;
+          case 'invalid-email':
+            message = 'Invalid email format';
+            break;
+          case 'too-many-requests':
+            message = 'Too many attempts. Please try again later';
+            break;
+          default:
+            message = e.message ?? 'Login failed. Please try again';
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(child: Text(message)),
+              ],
+            ),
+            backgroundColor: Colors.red[400],
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            margin: const EdgeInsets.all(16),
           ),
         );
       }
     } catch (e) {
+      debugPrint('Unexpected login error for ${_emailController.text.trim().toLowerCase()}: $e');
       setState(() => _loading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -347,7 +412,9 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
             ),
             backgroundColor: Colors.red[400],
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
             margin: const EdgeInsets.all(16),
           ),
         );
@@ -387,7 +454,9 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                                 Container(
                                   padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF2196F3).withOpacity(0.1),
+                                    color: const Color(
+                                      0xFF2196F3,
+                                    ).withValues(alpha: 0.1),
                                     shape: BoxShape.circle,
                                   ),
                                   child: const Icon(
@@ -397,7 +466,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                                   ),
                                 ),
                                 const SizedBox(height: 24),
-                                
+
                                 const Text(
                                   "Welcome Back",
                                   textAlign: TextAlign.center,
@@ -408,7 +477,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                                   ),
                                 ),
                                 const SizedBox(height: 8),
-                                
+
                                 Text(
                                   "Sign in to continue",
                                   textAlign: TextAlign.center,
@@ -423,7 +492,9 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                                   decoration: BoxDecoration(
                                     color: Colors.grey[50],
                                     borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: Colors.grey[200]!),
+                                    border: Border.all(
+                                      color: Colors.grey[200]!,
+                                    ),
                                   ),
                                   child: Row(
                                     children: [
@@ -472,7 +543,10 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                                             : Icons.visibility_off_outlined,
                                       ),
                                       onPressed: () {
-                                        setState(() => _obscurePassword = !_obscurePassword);
+                                        setState(
+                                          () => _obscurePassword =
+                                              !_obscurePassword,
+                                        );
                                       },
                                     ),
                                   ),
@@ -492,7 +566,9 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                                 ElevatedButton(
                                   onPressed: _loading ? null : _handleLogin,
                                   style: ElevatedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
                                   ),
                                   child: _loading
                                       ? const SizedBox(
@@ -520,17 +596,32 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                                         Navigator.push(
                                           context,
                                           PageRouteBuilder(
-                                            pageBuilder: (context, animation, secondaryAnimation) =>
-                                                const SignUpPage(),
-                                            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                                              return FadeTransition(opacity: animation, child: child);
-                                            },
+                                            pageBuilder:
+                                                (
+                                                  context,
+                                                  animation,
+                                                  secondaryAnimation,
+                                                ) => const SignUpPage(),
+                                            transitionsBuilder:
+                                                (
+                                                  context,
+                                                  animation,
+                                                  secondaryAnimation,
+                                                  child,
+                                                ) {
+                                                  return FadeTransition(
+                                                    opacity: animation,
+                                                    child: child,
+                                                  );
+                                                },
                                           ),
                                         );
                                       },
                                       child: const Text(
                                         "Sign Up",
-                                        style: TextStyle(fontWeight: FontWeight.bold),
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -597,7 +688,8 @@ class SignUpPage extends StatefulWidget {
   State<SignUpPage> createState() => _SignUpPageState();
 }
 
-class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateMixin {
+class _SignUpPageState extends State<SignUpPage>
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -621,16 +713,19 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     );
-    
+
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
     );
-    
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic));
-    
+
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: Curves.easeOutCubic,
+          ),
+        );
+
     _animationController.forward();
   }
 
@@ -658,7 +753,9 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
           ),
           backgroundColor: Colors.orange[400],
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
           margin: const EdgeInsets.all(16),
         ),
       );
@@ -670,38 +767,17 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
     setState(() => _isLoading = true);
 
     try {
-      final emailQuery = await FirebaseFirestore.instance
-          .collection('users')
-          .where('email', isEqualTo: _emailController.text.trim().toLowerCase())
-          .get();
+      final email = _emailController.text.trim().toLowerCase();
 
-      if (emailQuery.docs.isNotEmpty) {
-        setState(() => _isLoading = false);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Row(
-                children: [
-                  Icon(Icons.error_outline, color: Colors.white),
-                  SizedBox(width: 12),
-                  Expanded(child: Text("This Gmail is already registered")),
-                ],
-              ),
-              backgroundColor: Colors.red[400],
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              margin: const EdgeInsets.all(16),
-            ),
-          );
-        }
-        return;
-      }
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: email,
+        password: _passwordController.text,
+      );
 
       final newUser = RegisteredUser(
         fullName: _nameController.text.trim(),
-        email: _emailController.text.trim().toLowerCase(),
+        email: email,
         phone: _phoneController.text.trim(),
-        password: _passwordController.text,
         userType: _userType,
       );
 
@@ -709,6 +785,10 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
           .collection('users')
           .doc(newUser.email)
           .set(newUser.toMap());
+
+        debugPrint('Sign up success for ${newUser.email} with userType=${newUser.userType}');
+
+      await FirebaseAuth.instance.signOut();
 
       setState(() => _isLoading = false);
 
@@ -724,7 +804,9 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
             ),
             backgroundColor: Colors.green[400],
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
             margin: const EdgeInsets.all(16),
             duration: const Duration(seconds: 3),
           ),
@@ -732,7 +814,45 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
 
         Navigator.pop(context);
       }
+    } on FirebaseAuthException catch (e) {
+      debugPrint('FirebaseAuthException on sign up for ${_emailController.text.trim().toLowerCase()}: ${e.code} - ${e.message}');
+      setState(() => _isLoading = false);
+      if (mounted) {
+        String message;
+        switch (e.code) {
+          case 'email-already-in-use':
+            message = 'This Gmail is already registered';
+            break;
+          case 'invalid-email':
+            message = 'Invalid email format';
+            break;
+          case 'weak-password':
+            message = 'Password is too weak';
+            break;
+          default:
+            message = e.message ?? 'Sign up failed. Please try again';
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(child: Text(message)),
+              ],
+            ),
+            backgroundColor: Colors.red[400],
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+      }
     } catch (e) {
+      debugPrint('Unexpected sign up error for ${_emailController.text.trim().toLowerCase()}: $e');
       setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -746,7 +866,9 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
             ),
             backgroundColor: Colors.red[400],
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
             margin: const EdgeInsets.all(16),
           ),
         );
@@ -775,13 +897,16 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
+                                color: Colors.black.withValues(alpha: 0.1),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),
                             ],
                           ),
-                          child: const Icon(Icons.arrow_back, color: Color(0xFF2196F3)),
+                          child: const Icon(
+                            Icons.arrow_back,
+                            color: Color(0xFF2196F3),
+                          ),
                         ),
                         onPressed: () => Navigator.pop(context),
                       ),
@@ -809,7 +934,8 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
                                 child: Form(
                                   key: _formKey,
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
                                     children: [
                                       const Text(
                                         "Create Account",
@@ -834,8 +960,12 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
                                       Container(
                                         decoration: BoxDecoration(
                                           color: Colors.grey[50],
-                                          borderRadius: BorderRadius.circular(12),
-                                          border: Border.all(color: Colors.grey[200]!),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          border: Border.all(
+                                            color: Colors.grey[200]!,
+                                          ),
                                         ),
                                         child: Row(
                                           children: [
@@ -860,14 +990,18 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
 
                                       TextFormField(
                                         controller: _nameController,
-                                        textCapitalization: TextCapitalization.words,
+                                        textCapitalization:
+                                            TextCapitalization.words,
                                         decoration: const InputDecoration(
                                           labelText: "Full Name",
-                                          prefixIcon: Icon(Icons.person_outline),
+                                          prefixIcon: Icon(
+                                            Icons.person_outline,
+                                          ),
                                           hintText: "Juan Dela Cruz",
                                         ),
                                         validator: (value) {
-                                          if (value == null || value.trim().isEmpty) {
+                                          if (value == null ||
+                                              value.trim().isEmpty) {
                                             return "Please enter your full name";
                                           }
                                           if (value.trim().length < 3) {
@@ -880,10 +1014,13 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
 
                                       TextFormField(
                                         controller: _emailController,
-                                        keyboardType: TextInputType.emailAddress,
+                                        keyboardType:
+                                            TextInputType.emailAddress,
                                         decoration: const InputDecoration(
                                           labelText: "Gmail Address",
-                                          prefixIcon: Icon(Icons.email_outlined),
+                                          prefixIcon: Icon(
+                                            Icons.email_outlined,
+                                          ),
                                           hintText: "example@gmail.com",
                                         ),
                                         validator: EmailValidator.validateGmail,
@@ -895,14 +1032,23 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
                                         keyboardType: TextInputType.phone,
                                         decoration: const InputDecoration(
                                           labelText: "Phone Number",
-                                          prefixIcon: Icon(Icons.phone_outlined),
+                                          prefixIcon: Icon(
+                                            Icons.phone_outlined,
+                                          ),
                                           hintText: "+63 912 345 6789",
                                         ),
                                         validator: (value) {
-                                          if (value == null || value.trim().isEmpty) {
+                                          if (value == null ||
+                                              value.trim().isEmpty) {
                                             return "Please enter your phone number";
                                           }
-                                          if (value.replaceAll(RegExp(r'[^\d]'), '').length < 10) {
+                                          if (value
+                                                  .replaceAll(
+                                                    RegExp(r'[^\d]'),
+                                                    '',
+                                                  )
+                                                  .length <
+                                              10) {
                                             return "Please enter a valid phone number";
                                           }
                                           return null;
@@ -915,15 +1061,21 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
                                         obscureText: _obscurePassword,
                                         decoration: InputDecoration(
                                           labelText: "Password",
-                                          prefixIcon: const Icon(Icons.lock_outline),
+                                          prefixIcon: const Icon(
+                                            Icons.lock_outline,
+                                          ),
                                           suffixIcon: IconButton(
                                             icon: Icon(
                                               _obscurePassword
                                                   ? Icons.visibility_outlined
-                                                  : Icons.visibility_off_outlined,
+                                                  : Icons
+                                                        .visibility_off_outlined,
                                             ),
                                             onPressed: () {
-                                              setState(() => _obscurePassword = !_obscurePassword);
+                                              setState(
+                                                () => _obscurePassword =
+                                                    !_obscurePassword,
+                                              );
                                             },
                                           ),
                                         ),
@@ -944,15 +1096,21 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
                                         obscureText: _obscureConfirmPassword,
                                         decoration: InputDecoration(
                                           labelText: "Confirm Password",
-                                          prefixIcon: const Icon(Icons.lock_outline),
+                                          prefixIcon: const Icon(
+                                            Icons.lock_outline,
+                                          ),
                                           suffixIcon: IconButton(
                                             icon: Icon(
                                               _obscureConfirmPassword
                                                   ? Icons.visibility_outlined
-                                                  : Icons.visibility_off_outlined,
+                                                  : Icons
+                                                        .visibility_off_outlined,
                                             ),
                                             onPressed: () {
-                                              setState(() => _obscureConfirmPassword = !_obscureConfirmPassword);
+                                              setState(
+                                                () => _obscureConfirmPassword =
+                                                    !_obscureConfirmPassword,
+                                              );
                                             },
                                           ),
                                         ),
@@ -960,7 +1118,8 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
                                           if (value == null || value.isEmpty) {
                                             return "Please confirm your password";
                                           }
-                                          if (value != _passwordController.text) {
+                                          if (value !=
+                                              _passwordController.text) {
                                             return "Passwords do not match";
                                           }
                                           return null;
@@ -970,16 +1129,20 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
 
                                       GestureDetector(
                                         onTap: () {
-                                          setState(() => _acceptTerms = !_acceptTerms);
+                                          setState(
+                                            () => _acceptTerms = !_acceptTerms,
+                                          );
                                         },
                                         child: Container(
                                           padding: const EdgeInsets.all(16),
                                           decoration: BoxDecoration(
                                             color: const Color(0xFFE3F2FD),
-                                            borderRadius: BorderRadius.circular(12),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
                                             border: Border.all(
-                                              color: _acceptTerms 
-                                                  ? const Color(0xFF2196F3) 
+                                              color: _acceptTerms
+                                                  ? const Color(0xFF2196F3)
                                                   : Colors.grey[300]!,
                                               width: 2,
                                             ),
@@ -990,13 +1153,16 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
                                                 width: 24,
                                                 height: 24,
                                                 decoration: BoxDecoration(
-                                                  color: _acceptTerms 
-                                                      ? const Color(0xFF2196F3) 
+                                                  color: _acceptTerms
+                                                      ? const Color(0xFF2196F3)
                                                       : Colors.white,
-                                                  borderRadius: BorderRadius.circular(6),
+                                                  borderRadius:
+                                                      BorderRadius.circular(6),
                                                   border: Border.all(
-                                                    color: _acceptTerms 
-                                                        ? const Color(0xFF2196F3) 
+                                                    color: _acceptTerms
+                                                        ? const Color(
+                                                            0xFF2196F3,
+                                                          )
                                                         : Colors.grey[400]!,
                                                     width: 2,
                                                   ),
@@ -1026,18 +1192,23 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
                                       const SizedBox(height: 24),
 
                                       ElevatedButton(
-                                        onPressed: _isLoading ? null : _handleSignUp,
+                                        onPressed: _isLoading
+                                            ? null
+                                            : _handleSignUp,
                                         style: ElevatedButton.styleFrom(
-                                          padding: const EdgeInsets.symmetric(vertical: 16),
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 16,
+                                          ),
                                         ),
                                         child: _isLoading
                                             ? const SizedBox(
                                                 height: 20,
                                                 width: 20,
-                                                child: CircularProgressIndicator(
-                                                  strokeWidth: 2,
-                                                  color: Colors.white,
-                                                ),
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                      color: Colors.white,
+                                                    ),
                                               )
                                             : const Text("Create Account"),
                                       ),
@@ -1045,17 +1216,23 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
                                       const SizedBox(height: 16),
 
                                       Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: [
                                           Text(
                                             "Already have an account? ",
-                                            style: TextStyle(color: Colors.grey[600]),
+                                            style: TextStyle(
+                                              color: Colors.grey[600],
+                                            ),
                                           ),
                                           TextButton(
-                                            onPressed: () => Navigator.pop(context),
+                                            onPressed: () =>
+                                                Navigator.pop(context),
                                             child: const Text(
                                               "Sign In",
-                                              style: TextStyle(fontWeight: FontWeight.bold),
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                              ),
                                             ),
                                           ),
                                         ],
@@ -1114,3 +1291,4 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
     );
   }
 }
+

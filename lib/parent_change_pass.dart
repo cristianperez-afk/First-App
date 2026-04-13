@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:vaccine_care/main.dart';
 
 class ParentChangePasswordPage extends StatefulWidget {
@@ -19,6 +20,7 @@ class _ParentChangePasswordPageState extends State<ParentChangePasswordPage> {
   bool _obscureCurrent = true;
   bool _obscureNew = true;
   bool _obscureConfirm = true;
+  bool _saving = false;
 
   @override
   void dispose() {
@@ -28,19 +30,60 @@ class _ParentChangePasswordPageState extends State<ParentChangePasswordPage> {
     super.dispose();
   }
 
-  void _changePassword() {
+  Future<void> _changePassword() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // Update password securely (local demo)
-    currentUser = RegisteredUser(
-      fullName: currentUser!.fullName,
-      email: currentUser!.email,
-      phone: currentUser!.phone,
-      password: _newPasswordController.text.trim(),
-      userType: currentUser!.userType,
-    );
+    setState(() => _saving = true);
 
-    Navigator.pop(context, true); // return success
+    final authUser = FirebaseAuth.instance.currentUser;
+    if (authUser == null || currentUser == null) {
+      setState(() => _saving = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Session expired. Please sign in again'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    try {
+      final credential = EmailAuthProvider.credential(
+        email: authUser.email ?? currentUser!.email,
+        password: _currentPasswordController.text.trim(),
+      );
+
+      await authUser.reauthenticateWithCredential(credential);
+      await authUser.updatePassword(_newPasswordController.text.trim());
+
+      setState(() => _saving = false);
+      if (mounted) {
+        Navigator.pop(context, true);
+      }
+    } on FirebaseAuthException catch (e) {
+      setState(() => _saving = false);
+      if (mounted) {
+        final message =
+            e.code == 'wrong-password' || e.code == 'invalid-credential'
+            ? 'Current password is incorrect'
+            : (e.message ?? 'Unable to update password');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message), backgroundColor: Colors.red),
+        );
+      }
+    } catch (e) {
+      setState(() => _saving = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating password: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -72,7 +115,8 @@ class _ParentChangePasswordPageState extends State<ParentChangePasswordPage> {
                   prefixIcon: const Icon(Icons.lock),
                   suffixIcon: IconButton(
                     icon: Icon(
-                        _obscureCurrent ? Icons.visibility : Icons.visibility_off),
+                      _obscureCurrent ? Icons.visibility : Icons.visibility_off,
+                    ),
                     onPressed: () =>
                         setState(() => _obscureCurrent = !_obscureCurrent),
                   ),
@@ -81,9 +125,6 @@ class _ParentChangePasswordPageState extends State<ParentChangePasswordPage> {
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Enter your current password';
-                  }
-                  if (value != currentUser!.password) {
-                    return 'Current password is incorrect';
                   }
                   return null;
                 },
@@ -99,9 +140,9 @@ class _ParentChangePasswordPageState extends State<ParentChangePasswordPage> {
                   prefixIcon: const Icon(Icons.lock_outline),
                   suffixIcon: IconButton(
                     icon: Icon(
-                        _obscureNew ? Icons.visibility : Icons.visibility_off),
-                    onPressed: () =>
-                        setState(() => _obscureNew = !_obscureNew),
+                      _obscureNew ? Icons.visibility : Icons.visibility_off,
+                    ),
+                    onPressed: () => setState(() => _obscureNew = !_obscureNew),
                   ),
                   border: const OutlineInputBorder(),
                 ),
@@ -125,9 +166,9 @@ class _ParentChangePasswordPageState extends State<ParentChangePasswordPage> {
                   labelText: 'Confirm New Password',
                   prefixIcon: const Icon(Icons.lock_outline),
                   suffixIcon: IconButton(
-                    icon: Icon(_obscureConfirm
-                        ? Icons.visibility
-                        : Icons.visibility_off),
+                    icon: Icon(
+                      _obscureConfirm ? Icons.visibility : Icons.visibility_off,
+                    ),
                     onPressed: () =>
                         setState(() => _obscureConfirm = !_obscureConfirm),
                   ),
@@ -145,17 +186,26 @@ class _ParentChangePasswordPageState extends State<ParentChangePasswordPage> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _changePassword,
+                  onPressed: _saving ? null : _changePassword,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
-                    'Update Password',
-                    style: TextStyle(fontSize: 16),
-                  ),
+                  child: _saving
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          'Update Password',
+                          style: TextStyle(fontSize: 16),
+                        ),
                 ),
               ),
             ],

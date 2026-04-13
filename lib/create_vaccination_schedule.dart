@@ -20,7 +20,12 @@ class _VaccinationSchedulePageState extends State<VaccinationSchedulePage> {
   }
 
   Future<void> _loadPatients() async {
-    if (currentUser == null) return;
+    if (currentUser == null) {
+      if (mounted) {
+        setState(() => _loading = false);
+      }
+      return;
+    }
 
     setState(() => _loading = true);
 
@@ -141,9 +146,9 @@ class _VaccinationSchedulePageState extends State<VaccinationSchedulePage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -221,9 +226,9 @@ class _VaccinationSchedulePageState extends State<VaccinationSchedulePage> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
+                    color: statusColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: statusColor.withOpacity(0.3)),
+                    border: Border.all(color: statusColor.withValues(alpha: 0.3)),
                   ),
                   child: Text(
                     status,
@@ -318,8 +323,8 @@ class _CreateVaccinationSchedulePageState extends State<CreateVaccinationSchedul
         _loadingPatients = false;
       });
     } catch (e) {
-      setState(() => _loadingPatients = false);
       if (mounted) {
+        setState(() => _loadingPatients = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error loading patients: $e'),
@@ -496,7 +501,7 @@ class _CreateVaccinationSchedulePageState extends State<CreateVaccinationSchedul
                           final index = entry.key;
                           final schedule = entry.value;
                           return _buildVaccineScheduleCard(schedule, index);
-                        }).toList(),
+                        }),
 
                       const SizedBox(height: 32),
                     ],
@@ -511,7 +516,7 @@ class _CreateVaccinationSchedulePageState extends State<CreateVaccinationSchedul
                   color: Colors.white,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, -5),
                     ),
@@ -856,6 +861,7 @@ class _VaccineScheduleDialogState extends State<VaccineScheduleDialog> {
                     lastDate: DateTime.now().add(const Duration(days: 365)),
                   );
                   if (date != null && mounted) {
+                    if (!context.mounted) return;
                     final time = await showTimePicker(
                       context: context,
                       initialTime: TimeOfDay.fromDateTime(_scheduledDate),

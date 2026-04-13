@@ -20,7 +20,12 @@ class _ManageVaccinationsPageState extends State<ManageVaccinationsPage> {
   }
 
   Future<void> _loadSchedules() async {
-    if (currentUser == null) return;
+    if (currentUser == null) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+      return;
+    }
 
     try {
       final querySnapshot = await FirebaseFirestore.instance
@@ -75,8 +80,8 @@ class _ManageVaccinationsPageState extends State<ManageVaccinationsPage> {
         _isLoading = false;
       });
     } catch (e) {
-      setState(() => _isLoading = false);
       if (mounted) {
+        setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading schedules: $e')),
         );
@@ -268,7 +273,7 @@ class _ManageVaccinationsPageState extends State<ManageVaccinationsPage> {
                                 Row(
                                   children: [
                                     CircleAvatar(
-                                      backgroundColor: _getStatusColor(schedule['status']).withOpacity(0.1),
+                                      backgroundColor: _getStatusColor(schedule['status']).withValues(alpha: 0.1),
                                       child: Icon(
                                         schedule['status'] == 'Completed'
                                             ? Icons.check_circle
@@ -303,7 +308,7 @@ class _ManageVaccinationsPageState extends State<ManageVaccinationsPage> {
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                       decoration: BoxDecoration(
-                                        color: _getStatusColor(schedule['status']).withOpacity(0.1),
+                                        color: _getStatusColor(schedule['status']).withValues(alpha: 0.1),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: Text(

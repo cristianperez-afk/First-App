@@ -24,7 +24,12 @@ class _ParentScheduleTabState extends State<ParentScheduleTab> {
   }
 
   Future<void> _loadSettingsAndVaccinations() async {
-    if (currentUser == null) return;
+    if (currentUser == null) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+      return;
+    }
 
     try {
       // Load notification settings
@@ -105,8 +110,8 @@ class _ParentScheduleTabState extends State<ParentScheduleTab> {
         _isLoading = false;
       });
     } catch (e) {
-      setState(() => _isLoading = false);
       if (mounted) {
+        setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading vaccinations: $e')),
         );
@@ -174,7 +179,7 @@ class _ParentScheduleTabState extends State<ParentScheduleTab> {
                 Text(
                   'Track and manage your children\'s vaccinations',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
+                    color: Colors.white.withValues(alpha: 0.8),
                     fontSize: 14,
                   ),
                 ),
@@ -281,7 +286,7 @@ class _ParentScheduleTabState extends State<ParentScheduleTab> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
+        color: Colors.white.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -319,7 +324,7 @@ class _ParentScheduleTabState extends State<ParentScheduleTab> {
         });
       },
       backgroundColor: Colors.grey[100],
-      selectedColor: Theme.of(context).primaryColor.withOpacity(0.2),
+      selectedColor: Theme.of(context).primaryColor.withValues(alpha: 0.2),
       checkmarkColor: Theme.of(context).primaryColor,
       labelStyle: TextStyle(
         color: isSelected ? Theme.of(context).primaryColor : Colors.grey[700],
@@ -369,7 +374,7 @@ class _ParentScheduleTabState extends State<ParentScheduleTab> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.1),
+                      color: statusColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
@@ -415,7 +420,7 @@ class _ParentScheduleTabState extends State<ParentScheduleTab> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.15),
+                      color: statusColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(

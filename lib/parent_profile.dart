@@ -39,7 +39,7 @@ class _ParentProfileTabState extends State<ParentProfileTab> {
         });
       }
     } catch (e) {
-      print('Error loading profile picture: $e');
+      debugPrint('Error loading profile picture: $e');
     }
   }
 
@@ -109,7 +109,7 @@ class _ParentProfileTabState extends State<ParentProfileTab> {
       // Create a unique filename
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final sanitizedEmail = currentUser!.email.replaceAll('@', '_').replaceAll('.', '_');
-      final fileName = 'profile_$sanitizedEmail\_$timestamp.jpg';
+      final fileName = 'profile_${sanitizedEmail}_$timestamp.jpg';
 
       // Upload to Firebase Storage
       final storageRef = FirebaseStorage.instance
@@ -147,7 +147,7 @@ class _ParentProfileTabState extends State<ParentProfileTab> {
           final oldRef = FirebaseStorage.instance.refFromURL(_profilePictureUrl!);
           await oldRef.delete();
         } catch (e) {
-          print('Could not delete old image: $e');
+          debugPrint('Could not delete old image: $e');
           // Continue anyway - old image deletion is not critical
         }
       }
@@ -177,7 +177,7 @@ class _ParentProfileTabState extends State<ParentProfileTab> {
     } catch (e) {
       setState(() => _isUploading = false);
       
-      print('Upload error: $e');
+      debugPrint('Upload error: $e');
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -231,7 +231,7 @@ class _ParentProfileTabState extends State<ParentProfileTab> {
             height: 300,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white.withOpacity(0.1),
+              color: Colors.white.withValues(alpha: 0.1),
             ),
           ),
         ),
@@ -243,7 +243,7 @@ class _ParentProfileTabState extends State<ParentProfileTab> {
             height: 400,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white.withOpacity(0.1),
+              color: Colors.white.withValues(alpha: 0.1),
             ),
           ),
         ),
@@ -269,7 +269,7 @@ class _ParentProfileTabState extends State<ParentProfileTab> {
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF2196F3).withOpacity(0.3),
+                        color: const Color(0xFF2196F3).withValues(alpha: 0.3),
                         blurRadius: 15,
                         offset: const Offset(0, 5),
                       ),
@@ -287,7 +287,7 @@ class _ParentProfileTabState extends State<ParentProfileTab> {
                               color: Colors.white,
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.2),
+                                  color: Colors.black.withValues(alpha: 0.2),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
                                 ),
@@ -298,10 +298,12 @@ class _ParentProfileTabState extends State<ParentProfileTab> {
                               backgroundImage: _profilePictureUrl != null
                                   ? NetworkImage(_profilePictureUrl!)
                                   : null,
-                              backgroundColor: const Color(0xFF2196F3).withOpacity(0.3),
+                              backgroundColor: const Color(0xFF2196F3).withValues(alpha: 0.3),
                               child: _profilePictureUrl == null
                                   ? Text(
-                                      currentUser?.fullName[0].toUpperCase() ?? 'P',
+                                      currentUser?.fullName.trim().isNotEmpty == true
+                                          ? currentUser!.fullName.trim()[0].toUpperCase()
+                                          : 'P',
                                       style: const TextStyle(
                                         fontSize: 48,
                                         fontWeight: FontWeight.bold,
@@ -316,7 +318,7 @@ class _ParentProfileTabState extends State<ParentProfileTab> {
                               child: Container(
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: Colors.black.withOpacity(0.5),
+                                  color: Colors.black.withValues(alpha: 0.5),
                                 ),
                                 child: const Center(
                                   child: CircularProgressIndicator(
@@ -340,7 +342,7 @@ class _ParentProfileTabState extends State<ParentProfileTab> {
                                   border: Border.all(color: Colors.white, width: 3),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: const Color(0xFF2196F3).withOpacity(0.5),
+                                      color: const Color(0xFF2196F3).withValues(alpha: 0.5),
                                       blurRadius: 8,
                                       offset: const Offset(0, 2),
                                     ),
@@ -369,7 +371,7 @@ class _ParentProfileTabState extends State<ParentProfileTab> {
                       Text(
                         currentUser?.email ?? 'parent@email.com',
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                           fontSize: 14,
                         ),
                       ),
@@ -377,10 +379,10 @@ class _ParentProfileTabState extends State<ParentProfileTab> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: Colors.white.withOpacity(0.3),
+                            color: Colors.white.withValues(alpha: 0.3),
                           ),
                         ),
                         child: const Text(
@@ -417,6 +419,7 @@ class _ParentProfileTabState extends State<ParentProfileTab> {
                         subtitle: 'Update your personal information',
                         color: const Color(0xFF2196F3),
                         onTap: () async {
+                          final messenger = ScaffoldMessenger.of(context);
                           final updated = await Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -426,7 +429,7 @@ class _ParentProfileTabState extends State<ParentProfileTab> {
 
                           if (updated == true && mounted) {
                             setState(() {});
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            messenger.showSnackBar(
                               SnackBar(
                                 content: const Row(
                                   children: [
@@ -452,6 +455,7 @@ class _ParentProfileTabState extends State<ParentProfileTab> {
                         subtitle: 'Update your password',
                         color: const Color(0xFF9C27B0),
                         onTap: () async {
+                          final messenger = ScaffoldMessenger.of(context);
                           final changed = await Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -460,7 +464,7 @@ class _ParentProfileTabState extends State<ParentProfileTab> {
                           );
 
                           if (changed == true && mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            messenger.showSnackBar(
                               SnackBar(
                                 content: const Row(
                                   children: [
@@ -610,7 +614,7 @@ class _ParentProfileTabState extends State<ParentProfileTab> {
         leading: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.15),
+            color: color.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(
@@ -730,7 +734,7 @@ class _ParentProfileTabState extends State<ParentProfileTab> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFF2196F3).withOpacity(0.1),
+                color: const Color(0xFF2196F3).withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(

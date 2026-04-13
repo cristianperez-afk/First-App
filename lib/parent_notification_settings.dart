@@ -26,7 +26,12 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
   }
 
   Future<void> _loadSettings() async {
-    if (currentUser == null) return;
+    if (currentUser == null) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+      return;
+    }
 
     try {
       final doc = await FirebaseFirestore.instance
@@ -47,7 +52,9 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
         setState(() => _isLoading = false);
       }
     } catch (e) {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -65,10 +72,12 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
             'reminderDays': reminderDays,
           });
 
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Notification settings saved')),
       );
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Failed to save settings')),
       );
@@ -154,6 +163,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
       ),
     );
   }
+
   Widget _buildReminderOptions() {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),

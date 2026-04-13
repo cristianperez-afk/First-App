@@ -27,7 +27,12 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
   }
 
   Future<void> _loadChildren() async {
-    if (currentUser == null) return;
+    if (currentUser == null) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+      return;
+    }
 
     try {
       final querySnapshot = await FirebaseFirestore.instance
@@ -40,8 +45,8 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
         _isLoading = false;
       });
     } catch (e) {
-      setState(() => _isLoading = false);
       if (mounted) {
+        setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading children: $e')),
         );
